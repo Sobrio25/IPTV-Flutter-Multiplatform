@@ -1,5 +1,5 @@
 name: iptv_player
-description: A Flutter IPTV player for Android with M3U playlist support.
+description: A Flutter IPTV player for Android, Windows, and Linux with M3U playlist support.
 publish_to: "none"
 version: 0.1.0+1
 
@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  media_kit: ^1.2.6
+  media_kit_libs_video: ^1.0.7
+  media_kit_video: ^2.0.1
 
 
 dev_dependencies:
