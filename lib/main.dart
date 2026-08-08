@@ -377,21 +377,22 @@ class _IptvHomePageState extends State<IptvHomePage> {
       _readString('recentChannels'),
     ]);
 
-    final savedSources = _decodeSources(values[0]);
     final savedUrl = values[1]?.trim();
     final savedFavorites = values[2];
     final savedRecentChannels = _decodeChannels(values[3]);
 
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    final savedSources = _decodeSources(values[0], l10n);
     setState(() {
-      _sources = savedSources ?? defaultSources(_l10n);
+      _sources = savedSources ?? defaultSources(l10n);
       if (savedUrl != null &&
           savedUrl.isNotEmpty &&
           !_sources.any((source) => source.url == savedUrl)) {
         _sources = [
           PlaylistSource(
-            name: _l10n.savedPlaylist,
-            description: _l10n.savedPlaylistDescription,
+            name: l10n.savedPlaylist,
+            description: l10n.savedPlaylistDescription,
             url: savedUrl,
           ),
           ..._sources,
@@ -411,37 +412,44 @@ class _IptvHomePageState extends State<IptvHomePage> {
     unawaited(_removeString('channels'));
   }
 
-  List<PlaylistSource>? _decodeSources(String? rawSources) {
+  List<PlaylistSource>? _decodeSources(
+    String? rawSources,
+    AppLocalizations l10n,
+  ) {
     if (rawSources == null || rawSources.trim().isEmpty) return null;
     try {
       final decoded = jsonDecode(rawSources);
       if (decoded is! List<dynamic>) return null;
-      return _normalizeSources([
-        for (final item in decoded)
-          if (item is Map<dynamic, dynamic>)
-            PlaylistSource.fromJson(Map<String, Object?>.from(item)),
-      ]);
+      return _normalizeSources(
+        [
+          for (final item in decoded)
+            if (item is Map<dynamic, dynamic>)
+              PlaylistSource.fromJson(Map<String, Object?>.from(item)),
+        ],
+        l10n,
+      );
     } catch (_) {
       return null;
     }
   }
 
-  List<PlaylistSource> _normalizeSources(List<PlaylistSource> sources) {
+  List<PlaylistSource> _normalizeSources(
+    List<PlaylistSource> sources,
+    AppLocalizations l10n,
+  ) {
     final unique = <String, PlaylistSource>{};
     for (final source in sources) {
       final url = source.url.trim();
       if (url.isEmpty) continue;
       unique[url] = source.copyWith(
-        name: source.name.trim().isEmpty ? _l10n.m3uListName : source.name.trim(),
+        name: source.name.trim().isEmpty ? l10n.m3uListName : source.name.trim(),
         description: source.description.trim().isEmpty
-            ? _l10n.customListDescription
+            ? l10n.customListDescription
             : source.description.trim(),
         url: url,
       );
     }
-    return unique.isEmpty
-        ? defaultSources(_l10n)
-        : unique.values.toList();
+    return unique.isEmpty ? defaultSources(l10n) : unique.values.toList();
   }
 
   List<IptvChannel> _decodeChannels(String? rawChannels) {
@@ -612,7 +620,8 @@ class _IptvHomePageState extends State<IptvHomePage> {
         builder: (_) => _PlaylistSettingsPage(
           sources: _sources,
           onSourcesChanged: (sources) async {
-            final normalized = _normalizeSources(sources);
+            final l10n = AppLocalizations.of(context)!;
+            final normalized = _normalizeSources(sources, l10n);
             if (mounted) {
               setState(() => _sources = normalized);
             }
@@ -2661,12 +2670,14 @@ class _PlaylistSettingsPageState extends State<_PlaylistSettingsPage> {
       },
     );
 
-    nameController.dispose();
-    descriptionController.dispose();
-    urlController.dispose();
-    epgUrlController.dispose();
-    userAgentController.dispose();
-    refererController.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      nameController.dispose();
+      descriptionController.dispose();
+      urlController.dispose();
+      epgUrlController.dispose();
+      userAgentController.dispose();
+      refererController.dispose();
+    });
     return result;
   }
 
