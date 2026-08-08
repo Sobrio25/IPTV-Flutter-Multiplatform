@@ -1,16 +1,29 @@
-## IPTV Player
+# IPTV Flutter Multiplatform
 
-Flutter IPTV player for Android, Windows, and Linux with:
+Flutter IPTV player for Android, iOS, Windows, macOS, Linux, and web with:
 
 - editable M3U playlist sources
 - channel search, groups, and favorites
-- integrated Flutter video playback on Android, Windows, and Linux through `media_kit`
+- recent channels and sortable channel lists
+- queue-based channel surfing inside the player
+- adaptive layouts for mobile, desktop, and TV-sized windows
+- integrated Flutter video playback through `media_kit`
+- player controls for play/pause, retry, previous/next, volume/mute, fullscreen, and audio/video/subtitle tracks
+- automatic retry, keyboard shortcuts, and safe playback errors that redact source URLs
+- XMLTV discovery through `x-tvg-url`, configurable EPG sources, now/next data, and a searchable TV guide
+- catch-up playback for playlists that provide a compatible `catchup-source`
+- configurable User-Agent and Referer headers per playlist
+- cross-platform settings that preserve the legacy Android/Windows/Linux store
 
 Run it with:
 
 ```sh
 flutter run -d <device>
 ```
+
+Web providers must allow CORS requests from the app origin. IPTV Player does not
+include channels or subscriptions; users are responsible for adding legally
+authorized sources.
 
 Build Windows with:
 

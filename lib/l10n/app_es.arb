@@ -1,0 +1,217 @@
+{
+  "@@locale": "es",
+  "appTitle": "IPTV Player",
+  "playlistsLabel": "Listas M3U",
+  "settingsTooltip": "Configuración",
+  "recentChannels": "Recientes",
+  "statusSelectPlaylist": "Selecciona una lista M3U para ver sus canales.",
+  "statusDownloading": "Descargando {name}...",
+  "@statusDownloading": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "statusNoChannels": "La lista no tenía canales reproducibles.",
+  "statusChannelsLoaded": "{count} canales cargados desde {name}.",
+  "@statusChannelsLoaded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceList": "la lista",
+  "resourceGuide": "la guía",
+  "snackbarLoadFailed": "No se pudo cargar la lista.",
+  "playbackUnavailable": "El reproductor integrado no está disponible en esta plataforma.",
+  "savedPlaylist": "Lista guardada",
+  "savedPlaylistDescription": "Fuente guardada anteriormente",
+  "m3uListName": "Lista M3U",
+  "customListDescription": "Lista personalizada",
+  "noGroup": "Sin grupo",
+  "unnamedChannel": "Canal sin nombre",
+  "sourceGlobalName": "Todo IPTV.org",
+  "sourceGlobalDescription": "Lista global pública",
+  "sourceMexico": "México",
+  "sourceUsa": "Estados Unidos",
+  "sourceSpanish": "Español",
+  "sourceEnglish": "Inglés",
+  "sourceNews": "Noticias",
+  "sourceSports": "Deportes",
+  "sourceMovies": "Películas",
+  "sourceKids": "Niños",
+  "sourceByCountry": "Canales por país",
+  "sourceByLanguage": "Canales por idioma",
+  "sourceCategory": "Categoría",
+  "sortNameAsc": "Nombre A-Z",
+  "sortNameDesc": "Nombre Z-A",
+  "sortGroup": "Grupo",
+  "sortFavorites": "Favoritos",
+  "groupAll": "Todos",
+  "groupFavorites": "Favoritos",
+  "searchChannelsHint": "Buscar canal, programa o grupo",
+  "sortLabel": "Ordenar",
+  "groupLabel": "Grupo",
+  "emptyNoChannels": "Sin canales",
+  "emptyNoChannelsSubtitle": "No hay canales para mostrar.",
+  "nowLabel": "Ahora: {title}",
+  "@nowLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "nextLabel": "Sigue: {title}",
+  "@nextLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "playTooltip": "Reproducir",
+  "addFavorite": "Agregar favorito",
+  "removeFavorite": "Quitar favorito",
+  "reloadGuide": "Recargar guía",
+  "tvGuide": "Guía de TV",
+  "retry": "Reintentar",
+  "guideSearchHint": "Buscar canal o programa",
+  "guideEmptyTitle": "Sin programación",
+  "guideEmptySubtitle": "La guía no contiene resultados para esta búsqueda.",
+  "watchLive": "Ver en vivo",
+  "watchFromStart": "Ver desde el inicio",
+  "streamEnded": "La transmisión finalizó. Intenta reiniciarla o cambia de canal.",
+  "audioTracks": "Audio",
+  "subtitlesTracks": "Subtítulos",
+  "videoTracks": "Video",
+  "trackAuto": "Automático",
+  "trackDisabled": "Desactivado",
+  "trackLabel": "Pista {id}",
+  "@trackLabel": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "exitFullscreen": "Salir de pantalla completa",
+  "fullscreen": "Pantalla completa",
+  "previous": "Anterior",
+  "pause": "Pausar",
+  "play": "Reproducir",
+  "next": "Siguiente",
+  "restart": "Reiniciar",
+  "channels": "Canales",
+  "mute": "Silenciar",
+  "unmute": "Activar sonido",
+  "tracks": "Pistas",
+  "errorTimeout": "El servidor tardó demasiado en responder al cargar {resource}.",
+  "@errorTimeout": {
+    "placeholders": {
+      "resource": {
+        "type": "String"
+      }
+    }
+  },
+  "errorHttp": "El servidor rechazó {resource} (HTTP {status}).",
+  "@errorHttp": {
+    "placeholders": {
+      "resource": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFormat": "El formato de {resource} no es válido.",
+  "@errorFormat": {
+    "placeholders": {
+      "resource": {
+        "type": "String"
+      }
+    }
+  },
+  "errorNetworkGeneric": "No se pudo cargar {resource}. Revisa la conexión y la fuente.",
+  "@errorNetworkGeneric": {
+    "placeholders": {
+      "resource": {
+        "type": "String"
+      }
+    }
+  },
+  "errorAuth": "El proveedor rechazó el acceso a {channel}. Revisa las credenciales o encabezados.",
+  "@errorAuth": {
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "errorGone": "La transmisión de {channel} ya no está disponible.",
+  "@errorGone": {
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPlaybackTimeout": "{channel} tardó demasiado en responder.",
+  "@errorPlaybackTimeout": {
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPlaybackGeneric": "No se pudo reproducir {channel}. Se ocultaron los detalles sensibles de la fuente.",
+  "@errorPlaybackGeneric": {
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "fallbackChannel": "el canal",
+  "privateSource": "Fuente privada",
+  "settingsTitle": "Configuración",
+  "restoreListsTooltip": "Restaurar listas",
+  "addListTooltip": "Agregar lista",
+  "editTooltip": "Editar",
+  "deleteTooltip": "Eliminar",
+  "deleteTitle": "Eliminar lista",
+  "deleteConfirm": "¿Quieres eliminar \"{name}\"?",
+  "@deleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cancel": "Cancelar",
+  "delete": "Eliminar",
+  "restoreTitle": "Restaurar listas",
+  "restoreMessage": "Se reemplazarán las listas actuales por las fuentes predeterminadas.",
+  "restore": "Restaurar",
+  "newListTitle": "Nueva lista",
+  "editListTitle": "Editar lista",
+  "nameLabel": "Nombre",
+  "nameRequired": "Escribe un nombre",
+  "descriptionLabel": "Descripción",
+  "m3uUrlLabel": "URL M3U",
+  "urlInvalid": "Escribe una URL http o https",
+  "epgUrlLabel": "URL XMLTV / EPG (opcional)",
+  "epgUrlHelper": "También se detecta x-tvg-url dentro de la lista.",
+  "epgUrlInvalid": "Escribe una URL EPG válida",
+  "advancedHeaders": "Encabezados avanzados",
+  "advancedHeadersSubtitle": "Para proveedores que requieren User-Agent o Referer",
+  "userAgentLabel": "User-Agent (opcional)",
+  "refererLabel": "Referer (opcional)",
+  "save": "Guardar"
+}

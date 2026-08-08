@@ -1,0 +1,217 @@
+{
+  "@@locale": "en",
+  "appTitle": "IPTV Player",
+  "playlistsLabel": "M3U playlists",
+  "settingsTooltip": "Settings",
+  "recentChannels": "Recent",
+  "statusSelectPlaylist": "Select an M3U playlist to see its channels.",
+  "statusDownloading": "Downloading {name}...",
+  "@statusDownloading": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "statusNoChannels": "The playlist had no playable channels.",
+  "statusChannelsLoaded": "{count} channels loaded from {name}.",
+  "@statusChannelsLoaded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "resourceList": "the playlist",
+  "resourceGuide": "the guide",
+  "snackbarLoadFailed": "Could not load the playlist.",
+  "playbackUnavailable": "Integrated playback is not available on this platform.",
+  "savedPlaylist": "Saved playlist",
+  "savedPlaylistDescription": "Previously saved source",
+  "m3uListName": "M3U playlist",
+  "customListDescription": "Custom playlist",
+  "noGroup": "No group",
+  "unnamedChannel": "Unnamed channel",
+  "sourceGlobalName": "Todo IPTV.org",
+  "sourceGlobalDescription": "Global public playlist",
+  "sourceMexico": "Mexico",
+  "sourceUsa": "United States",
+  "sourceSpanish": "Spanish",
+  "sourceEnglish": "English",
+  "sourceNews": "News",
+  "sourceSports": "Sports",
+  "sourceMovies": "Movies",
+  "sourceKids": "Kids",
+  "sourceByCountry": "Channels by country",
+  "sourceByLanguage": "Channels by language",
+  "sourceCategory": "Category",
+  "sortNameAsc": "Name A-Z",
+  "sortNameDesc": "Name Z-A",
+  "sortGroup": "Group",
+  "sortFavorites": "Favorites",
+  "groupAll": "All",
+  "groupFavorites": "Favorites",
+  "searchChannelsHint": "Search channel, program, or group",
+  "sortLabel": "Sort",
+  "groupLabel": "Group",
+  "emptyNoChannels": "No channels",
+  "emptyNoChannelsSubtitle": "There are no channels to show.",
+  "nowLabel": "Now: {title}",
+  "@nowLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "nextLabel": "Up next: {title}",
+  "@nextLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "playTooltip": "Play",
+  "addFavorite": "Add favorite",
+  "removeFavorite": "Remove favorite",
+  "reloadGuide": "Reload guide",
+  "tvGuide": "TV Guide",
+  "retry": "Retry",
+  "guideSearchHint": "Search channel or program",
+  "guideEmptyTitle": "No schedule",
+  "guideEmptySubtitle": "The guide has no results for this search.",
+  "watchLive": "Watch live",
+  "watchFromStart": "Watch from start",
+  "streamEnded": "The stream ended. Try restarting it or changing channels.",
+  "audioTracks": "Audio",
+  "subtitlesTracks": "Subtitles",
+  "videoTracks": "Video",
+  "trackAuto": "Automatic",
+  "trackDisabled": "Disabled",
+  "trackLabel": "Track {id}",
+  "@trackLabel": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "exitFullscreen": "Exit fullscreen",
+  "fullscreen": "Fullscreen",
+  "previous": "Previous",
+  "pause": "Pause",
+  "play": "Play",
+  "next": "Next",
+  "restart": "Restart",
+  "channels": "Channels",
+  "mute": "Mute",
+  "unmute": "Unmute",
+  "tracks": "Tracks",
+  "errorTimeout": "The server took too long to respond while loading {resource}.",
+  "@errorTimeout": {
+    "placeholders": {
+      "resource": {
+        "type": "String"
+      }
+    }
+  },
+  "errorHttp": "The server rejected {resource} (HTTP {status}).",
+  "@errorHttp": {
+    "placeholders": {
+      "resource": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFormat": "The format of {resource} is invalid.",
+  "@errorFormat": {
+    "placeholders": {
+      "resource": {
+        "type": "String"
+      }
+    }
+  },
+  "errorNetworkGeneric": "Could not load {resource}. Check the connection and the source.",
+  "@errorNetworkGeneric": {
+    "placeholders": {
+      "resource": {
+        "type": "String"
+      }
+    }
+  },
+  "errorAuth": "The provider rejected access to {channel}. Check the credentials or headers.",
+  "@errorAuth": {
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "errorGone": "The stream for {channel} is no longer available.",
+  "@errorGone": {
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPlaybackTimeout": "{channel} took too long to respond.",
+  "@errorPlaybackTimeout": {
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPlaybackGeneric": "Could not play {channel}. Sensitive source details were hidden.",
+  "@errorPlaybackGeneric": {
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "fallbackChannel": "the channel",
+  "privateSource": "Private source",
+  "settingsTitle": "Settings",
+  "restoreListsTooltip": "Restore playlists",
+  "addListTooltip": "Add playlist",
+  "editTooltip": "Edit",
+  "deleteTooltip": "Delete",
+  "deleteTitle": "Delete playlist",
+  "deleteConfirm": "Delete \"{name}\"?",
+  "@deleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "restoreTitle": "Restore playlists",
+  "restoreMessage": "Current playlists will be replaced with the default sources.",
+  "restore": "Restore",
+  "newListTitle": "New playlist",
+  "editListTitle": "Edit playlist",
+  "nameLabel": "Name",
+  "nameRequired": "Enter a name",
+  "descriptionLabel": "Description",
+  "m3uUrlLabel": "M3U URL",
+  "urlInvalid": "Enter an http or https URL",
+  "epgUrlLabel": "XMLTV / EPG URL (optional)",
+  "epgUrlHelper": "x-tvg-url is also detected inside the playlist.",
+  "epgUrlInvalid": "Enter a valid EPG URL",
+  "advancedHeaders": "Advanced headers",
+  "advancedHeadersSubtitle": "For providers that require a User-Agent or Referer",
+  "userAgentLabel": "User-Agent (optional)",
+  "refererLabel": "Referer (optional)",
+  "save": "Save"
+}

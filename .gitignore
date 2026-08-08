@@ -5,6 +5,9 @@
 .metadata
 build/
 
+# Generated localization files
+lib/l10n/app_localizations*.dart
+
 # Flutter/Gradle generated state
 android/.gradle/
 android/local.properties
