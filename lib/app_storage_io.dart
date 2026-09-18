@@ -13,8 +13,7 @@ Future<String?> readAppString(String key) async {
       return null;
     }
   }
-  final values = await _readFileStore();
-  return values[key];
+  return _enqueue(() async => (await _loadFileStore())[key]);
 }
 
 Future<void> writeAppString(String key, String value) async {
@@ -29,9 +28,12 @@ Future<void> writeAppString(String key, String value) async {
     }
     return;
   }
-  final values = await _readFileStore();
-  values[key] = value;
-  await _writeFileStore(values);
+  await _enqueue(() async {
+    final values = await _loadFileStore();
+    if (values[key] == value) return;
+    values[key] = value;
+    await _writeFileStore(values);
+  });
 }
 
 Future<void> removeAppString(String key) async {
@@ -43,10 +45,26 @@ Future<void> removeAppString(String key) async {
     }
     return;
   }
-  final values = await _readFileStore();
-  values.remove(key);
-  await _writeFileStore(values);
+  await _enqueue(() async {
+    final values = await _loadFileStore();
+    if (values.remove(key) == null) return;
+    await _writeFileStore(values);
+  });
 }
+
+// File operations are serialized: concurrent read-modify-write cycles would
+// otherwise drop keys or interleave writes and corrupt settings.json.
+Future<void> _queue = Future<void>.value();
+Map<String, String>? _cache;
+
+Future<T> _enqueue<T>(Future<T> Function() operation) {
+  final result = _queue.then((_) => operation());
+  _queue = result.then<void>((_) {}, onError: (_) {});
+  return result;
+}
+
+Future<Map<String, String>> _loadFileStore() async =>
+    _cache ??= await _readFileStore();
 
 File get _storageFile {
   final baseDir = _platformConfigDirectory;
@@ -103,10 +121,14 @@ Future<Map<String, String>> _readFileStore() async {
 Future<void> _writeFileStore(Map<String, String> values) async {
   try {
     await _storageFile.parent.create(recursive: true);
-    await _storageFile.writeAsString(
+    // Write to a temp file first so a crash mid-write cannot truncate the
+    // real settings file.
+    final temp = File('${_storageFile.path}.tmp');
+    await temp.writeAsString(
       const JsonEncoder.withIndent('  ').convert(values),
       flush: true,
     );
+    await temp.rename(_storageFile.path);
   } on FileSystemException {
     // Persistence is useful but should not block playback.
   }

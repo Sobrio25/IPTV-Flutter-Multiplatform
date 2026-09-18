@@ -340,7 +340,8 @@ class IptvApp extends StatelessWidget {
         ),
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xff0b0f12),
-        visualDensity: VisualDensity.compact,
+        // Compact on desktop, regular touch targets on phones and TVs.
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: const IptvHomePage(),
     );
@@ -502,7 +503,7 @@ class _IptvHomePageState extends State<IptvHomePage> {
     }
 
     final body = utf8.decode(response.bodyBytes, allowMalformed: true);
-    final parsed = parseM3uPlaylist(body);
+    final parsed = await compute(parseM3uPlaylist, body);
     final sourceHeaders = _headersForSource(source);
     final channels = _dedupeChannelsByUrl(
       parsed.channels.map(
@@ -1001,6 +1002,23 @@ class _ChannelListPageState extends State<_ChannelListPage> {
   var _epgByChannel = <String, List<EpgProgram>>{};
   var _epgLoading = false;
   String? _epgError;
+  Timer? _searchDebounce;
+  // Filtering/sorting thousands of channels on every build (and once per
+  // visible row for the groups) makes scrolling and typing janky, so both
+  // results are cached until one of their inputs changes.
+  List<String>? _cachedGroups;
+  List<IptvChannel>? _cachedVisibleChannels;
+  final _nameKeys = <IptvChannel, String>{};
+
+  String _nameKey(IptvChannel channel) =>
+      _nameKeys[channel] ??= channel.name.toLowerCase();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _cachedGroups = null;
+    _cachedVisibleChannels = null;
+  }
 
   @override
   void initState() {
@@ -1036,7 +1054,10 @@ class _ChannelListPageState extends State<_ChannelListPage> {
         programs.sort((a, b) => a.start.compareTo(b.start));
       }
       if (!mounted) return;
-      setState(() => _epgByChannel = merged);
+      setState(() {
+        _epgByChannel = merged;
+        _cachedVisibleChannels = null;
+      });
     } catch (error) {
       if (!mounted) return;
       setState(
@@ -1054,11 +1075,14 @@ class _ChannelListPageState extends State<_ChannelListPage> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
-  List<String> get _groups {
+  List<String> get _groups => _cachedGroups ??= _computeGroups();
+
+  List<String> _computeGroups() {
     final l10n = AppLocalizations.of(context)!;
     final groups =
         widget.channels
@@ -1070,7 +1094,10 @@ class _ChannelListPageState extends State<_ChannelListPage> {
     return [l10n.groupAll, l10n.groupFavorites, ...groups];
   }
 
-  List<IptvChannel> get _visibleChannels {
+  List<IptvChannel> get _visibleChannels =>
+      _cachedVisibleChannels ??= _computeVisibleChannels();
+
+  List<IptvChannel> _computeVisibleChannels() {
     final l10n = AppLocalizations.of(context)!;
     final query = _searchText.trim().toLowerCase();
     final visible = widget.channels.where((channel) {
@@ -1083,7 +1110,7 @@ class _ChannelListPageState extends State<_ChannelListPage> {
           channel.group == _selectedGroup;
       final matchesSearch =
           query.isEmpty ||
-          channel.name.toLowerCase().contains(query) ||
+          _nameKey(channel).contains(query) ||
           channel.group.toLowerCase().contains(query) ||
           _programsFor(
             channel,
@@ -1099,17 +1126,15 @@ class _ChannelListPageState extends State<_ChannelListPage> {
     final favoriteB = _favorites.contains(b.url);
     switch (sortMode) {
       case _ChannelSort.nameAsc:
-        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+        return _nameKey(a).compareTo(_nameKey(b));
       case _ChannelSort.nameDesc:
-        return b.name.toLowerCase().compareTo(a.name.toLowerCase());
+        return _nameKey(b).compareTo(_nameKey(a));
       case _ChannelSort.group:
         final group = a.group.toLowerCase().compareTo(b.group.toLowerCase());
-        return group == 0
-            ? a.name.toLowerCase().compareTo(b.name.toLowerCase())
-            : group;
+        return group == 0 ? _nameKey(a).compareTo(_nameKey(b)) : group;
       case _ChannelSort.favoritesFirst:
         if (favoriteA != favoriteB) return favoriteA ? -1 : 1;
-        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+        return _nameKey(a).compareTo(_nameKey(b));
     }
   }
 
@@ -1118,6 +1143,7 @@ class _ChannelListPageState extends State<_ChannelListPage> {
       if (!_favorites.add(channel.url)) {
         _favorites.remove(channel.url);
       }
+      _cachedVisibleChannels = null;
     });
     widget.onFavorite(channel);
   }
@@ -1171,9 +1197,34 @@ class _ChannelListPageState extends State<_ChannelListPage> {
     final l10n = AppLocalizations.of(context)!;
     final search = TextField(
       controller: _searchController,
-      onChanged: (value) => setState(() => _searchText = value),
+      onChanged: (value) {
+        // Rebuild right away so the clear button appears/disappears.
+        setState(() {});
+        _searchDebounce?.cancel();
+        _searchDebounce = Timer(const Duration(milliseconds: 250), () {
+          if (!mounted) return;
+          setState(() {
+            _searchText = value;
+            _cachedVisibleChannels = null;
+          });
+        });
+      },
       decoration: InputDecoration(
         prefixIcon: const Icon(Icons.search),
+        suffixIcon: _searchController.text.isEmpty
+            ? null
+            : IconButton(
+                tooltip: MaterialLocalizations.of(context).clearButtonTooltip,
+                onPressed: () {
+                  _searchDebounce?.cancel();
+                  _searchController.clear();
+                  setState(() {
+                    _searchText = '';
+                    _cachedVisibleChannels = null;
+                  });
+                },
+                icon: const Icon(Icons.close),
+              ),
         labelText: l10n.searchChannelsHint,
         border: const OutlineInputBorder(),
       ),
@@ -1191,7 +1242,10 @@ class _ChannelListPageState extends State<_ChannelListPage> {
       ],
       onChanged: (value) {
         if (value == null) return;
-        setState(() => _sortMode = value);
+        setState(() {
+          _sortMode = value;
+          _cachedVisibleChannels = null;
+        });
       },
     );
     if (wide) {
@@ -1220,8 +1274,21 @@ class _ChannelListPageState extends State<_ChannelListPage> {
     );
   }
 
+  void _selectGroup(String group) {
+    setState(() {
+      _selectedGroup = group;
+      _cachedVisibleChannels = null;
+    });
+  }
+
   Widget _buildGroupSelector({required bool wide}) {
     final l10n = AppLocalizations.of(context)!;
+    final groups = _groups;
+    // An empty selection means "all"; the dropdown asserts that its value
+    // matches exactly one item, so never hand it the empty string.
+    final selectedGroup = groups.contains(_selectedGroup)
+        ? _selectedGroup
+        : l10n.groupAll;
     if (wide) {
       return Material(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
@@ -1229,10 +1296,10 @@ class _ChannelListPageState extends State<_ChannelListPage> {
         clipBehavior: Clip.antiAlias,
         child: ListView.builder(
           padding: const EdgeInsets.symmetric(vertical: 6),
-          itemCount: _groups.length,
+          itemCount: groups.length,
           itemBuilder: (context, index) {
-            final group = _groups[index];
-            final selected = _selectedGroup == group;
+            final group = groups[index];
+            final selected = selectedGroup == group;
             return ListTile(
               selected: selected,
               selectedTileColor: Theme.of(
@@ -1244,14 +1311,14 @@ class _ChannelListPageState extends State<_ChannelListPage> {
                     : Icons.folder_outlined,
               ),
               title: Text(group, maxLines: 2, overflow: TextOverflow.ellipsis),
-              onTap: () => setState(() => _selectedGroup = group),
+              onTap: () => _selectGroup(group),
             );
           },
         ),
       );
     }
     return DropdownButtonFormField<String>(
-      initialValue: _selectedGroup,
+      initialValue: selectedGroup,
       isExpanded: true,
       decoration: InputDecoration(
         prefixIcon: const Icon(Icons.folder_outlined),
@@ -1259,14 +1326,14 @@ class _ChannelListPageState extends State<_ChannelListPage> {
         border: const OutlineInputBorder(),
       ),
       items: [
-        for (final group in _groups)
+        for (final group in groups)
           DropdownMenuItem(
             value: group,
             child: Text(group, maxLines: 1, overflow: TextOverflow.ellipsis),
           ),
       ],
       onChanged: (group) {
-        if (group != null) setState(() => _selectedGroup = group);
+        if (group != null) _selectGroup(group);
       },
     );
   }
@@ -1316,23 +1383,13 @@ class _ChannelListPageState extends State<_ChannelListPage> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  tooltip: l10n.playTooltip,
-                  onPressed: () =>
-                      widget.onPlayChannel(channel, visibleChannels),
-                  icon: const Icon(Icons.play_circle),
-                ),
-                IconButton(
-                  tooltip: favorite
-                      ? l10n.removeFavorite
-                      : l10n.addFavorite,
-                  onPressed: () => _toggleFavorite(channel),
-                  icon: Icon(favorite ? Icons.star : Icons.star_border),
-                ),
-              ],
+            trailing: IconButton(
+              tooltip: favorite ? l10n.removeFavorite : l10n.addFavorite,
+              onPressed: () => _toggleFavorite(channel),
+              icon: Icon(
+                favorite ? Icons.star : Icons.star_border,
+                color: favorite ? const Color(0xffffc857) : null,
+              ),
             ),
             onTap: () => widget.onPlayChannel(channel, visibleChannels),
           ),
@@ -1535,9 +1592,18 @@ class _EpgGuidePageState extends State<_EpgGuidePage> {
                               final programs = widget
                                   .programsFor(channel)
                                   .where((program) {
-                                    return program.stop.isAfter(
-                                          now.subtract(const Duration(days: 7)),
-                                        ) &&
+                                    // Past shows are only useful when the
+                                    // channel offers catch-up; otherwise the
+                                    // list should open on what is on now.
+                                    final earliest =
+                                        channel.catchupSource.trim().isEmpty
+                                        ? now
+                                        : now.subtract(
+                                            Duration(
+                                              days: channel.catchupDays ?? 7,
+                                            ),
+                                          );
+                                    return program.stop.isAfter(earliest) &&
                                         program.start.isBefore(
                                           now.add(const Duration(days: 3)),
                                         );
@@ -1673,8 +1739,10 @@ class _PlayerPageState extends State<_PlayerPage> with WidgetsBindingObserver {
   StreamSubscription<bool>? _playingSubscription;
   Timer? _retryTimer;
   Timer? _rememberTimer;
+  Timer? _hideControlsTimer;
   var _opening = true;
   var _fullscreen = false;
+  var _controlsVisible = true;
   var _openGeneration = 0;
   var _volume = 100.0;
   var _lastAudibleVolume = 100.0;
@@ -1794,6 +1862,9 @@ class _PlayerPageState extends State<_PlayerPage> with WidgetsBindingObserver {
 
   void _handlePlayerError(String error) {
     if (!mounted) return;
+    // libmpv also reports recoverable decoder/network hiccups here; do not
+    // tear down a stream that is still playing fine.
+    if (!_opening && _player.state.playing && !_player.state.buffering) return;
     _rememberTimer?.cancel();
     if (_scheduleAutomaticRetry()) return;
     setState(() {
@@ -1855,33 +1926,36 @@ class _PlayerPageState extends State<_PlayerPage> with WidgetsBindingObserver {
   Future<void> _setFullscreen(bool value) async {
     if (_fullscreen == value) return;
     setState(() => _fullscreen = value);
-    try {
-      if (value) {
-        await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-        if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-          await SystemChrome.setPreferredOrientations(const [
-            DeviceOrientation.landscapeLeft,
-            DeviceOrientation.landscapeRight,
-          ]);
-        }
-      } else {
-        await _restoreSystemUi();
-      }
-    } on PlatformException {
-      // Fullscreen is a nice-to-have on desktop and older platform shells.
+    _showControls();
+    // The media_kit helpers hide the system bars and force landscape on
+    // mobile, and put the native window in fullscreen on desktop.
+    if (value) {
+      await defaultEnterNativeFullscreen();
+    } else {
+      await defaultExitNativeFullscreen();
     }
   }
 
-  Future<void> _restoreSystemUi() async {
-    try {
-      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-        await SystemChrome.setPreferredOrientations(
-          const <DeviceOrientation>[],
-        );
+  /// Shows the overlay controls; in fullscreen they fade out again after a
+  /// few seconds without interaction so nothing covers the picture.
+  void _showControls() {
+    _hideControlsTimer?.cancel();
+    if (!_controlsVisible && mounted) setState(() => _controlsVisible = true);
+    if (!_fullscreen) return;
+    _hideControlsTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted && _fullscreen && _error == null) {
+        setState(() => _controlsVisible = false);
       }
-    } on PlatformException {
-      // Restoring the app chrome should not block leaving the player.
+    });
+  }
+
+  void _toggleControls() {
+    if (!_fullscreen) return;
+    if (_controlsVisible) {
+      _hideControlsTimer?.cancel();
+      setState(() => _controlsVisible = false);
+    } else {
+      _showControls();
     }
   }
 
@@ -1899,9 +1973,14 @@ class _PlayerPageState extends State<_PlayerPage> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused ||
-        state == AppLifecycleState.hidden) {
+    // On desktop and web `inactive`/`hidden` fire whenever the window loses
+    // focus or is minimized, which must not stop the stream. Only pause when
+    // a mobile app is really sent to the background.
+    final mobile =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS);
+    if (mobile && state == AppLifecycleState.paused) {
       unawaited(_player.pause());
     }
   }
@@ -1909,12 +1988,14 @@ class _PlayerPageState extends State<_PlayerPage> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    unawaited(_restoreSystemUi());
+    if (_fullscreen) unawaited(defaultExitNativeFullscreen());
     unawaited(_setWakelock(false));
     unawaited(_errorSubscription?.cancel());
     unawaited(_completedSubscription?.cancel());
     unawaited(_playingSubscription?.cancel());
     _retryTimer?.cancel();
+    _rememberTimer?.cancel();
+    _hideControlsTimer?.cancel();
     unawaited(_player.dispose());
     super.dispose();
   }
@@ -2080,8 +2161,22 @@ class _PlayerPageState extends State<_PlayerPage> with WidgetsBindingObserver {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Video(controller: _controller, fit: BoxFit.contain),
-          if (_fullscreen)
+          // The page provides its own live-TV controls; the default VOD
+          // controls of media_kit (seek bar, second fullscreen button) would
+          // overlap them.
+          Video(
+            controller: _controller,
+            fit: BoxFit.contain,
+            controls: NoVideoControls,
+          ),
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _toggleControls,
+              onDoubleTap: () => _setFullscreen(!_fullscreen),
+            ),
+          ),
+          if (_fullscreen && _controlsVisible)
             Positioned(
               top: 0,
               left: 0,
@@ -2196,7 +2291,9 @@ class _PlayerPageState extends State<_PlayerPage> with WidgetsBindingObserver {
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
     return Material(
-      color: colorScheme.surfaceContainerLow,
+      color: _fullscreen
+          ? colorScheme.surfaceContainerLow.withValues(alpha: 0.86)
+          : colorScheme.surfaceContainerLow,
       child: SafeArea(
         top: false,
         child: Padding(
@@ -2335,12 +2432,39 @@ class _PlayerPageState extends State<_PlayerPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final content = Column(
-      children: [
-        Expanded(child: _buildVideoPane()),
-        _buildControls(),
-      ],
-    );
+    final content = _fullscreen
+        ? MouseRegion(
+            cursor: _controlsVisible
+                ? MouseCursor.defer
+                : SystemMouseCursors.none,
+            onHover: (_) => _showControls(),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _buildVideoPane(),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: IgnorePointer(
+                    ignoring: !_controlsVisible,
+                    child: AnimatedOpacity(
+                      opacity: _controlsVisible ? 1 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Listener(
+                        onPointerDown: (_) => _showControls(),
+                        child: _buildControls(),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        : Column(
+            children: [
+              Expanded(child: _buildVideoPane()),
+              _buildControls(),
+            ],
+          );
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.space): _player.playOrPause,
@@ -2349,6 +2473,14 @@ class _PlayerPageState extends State<_PlayerPage> with WidgetsBindingObserver {
         const SingleActivator(LogicalKeyboardKey.keyM): _toggleMute,
         const SingleActivator(LogicalKeyboardKey.arrowRight): _nextChannel,
         const SingleActivator(LogicalKeyboardKey.arrowLeft): _previousChannel,
+        // TV remotes and media keyboards.
+        const SingleActivator(LogicalKeyboardKey.channelUp): _nextChannel,
+        const SingleActivator(LogicalKeyboardKey.channelDown): _previousChannel,
+        const SingleActivator(LogicalKeyboardKey.mediaTrackNext): _nextChannel,
+        const SingleActivator(LogicalKeyboardKey.mediaTrackPrevious):
+            _previousChannel,
+        const SingleActivator(LogicalKeyboardKey.mediaPlayPause):
+            _player.playOrPause,
         const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
             _setVolume(_volume + 5),
         const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
@@ -2835,6 +2967,9 @@ class _ChannelLogo extends StatelessWidget {
         width: size,
         height: size,
         fit: BoxFit.contain,
+        // Playlist logos are often full-size PNGs; decoding them at display
+        // size keeps long channel lists from exhausting image memory.
+        cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).round(),
         errorBuilder: (_, __, ___) => fallback,
       ),
     );
@@ -2964,7 +3099,11 @@ Future<Map<String, List<EpgProgram>>> downloadXmlTv(
   if (response.statusCode < 200 || response.statusCode >= 300) {
     throw StateError('HTTP ${response.statusCode}');
   }
-  return parseXmlTv(utf8.decode(response.bodyBytes, allowMalformed: true));
+  // XMLTV guides can be tens of MB; parse off the UI thread.
+  return compute(
+    parseXmlTv,
+    utf8.decode(response.bodyBytes, allowMalformed: true),
+  );
 }
 
 Map<String, List<EpgProgram>> parseXmlTv(String content) {
